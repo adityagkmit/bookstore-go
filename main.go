@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	config "github.com/adityagkmit/bookstore/utils"
+	"github.com/adityagkmit/bookstore/utils"
 	"github.com/joho/godotenv"
 )
 
@@ -19,7 +19,7 @@ func main() {
 	}
 
 	// Connect to Database
-	db, err := config.ConnectDB()
+	db, err := utils.ConnectDB()
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
