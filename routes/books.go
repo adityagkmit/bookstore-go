@@ -11,18 +11,16 @@ import (
 )
 
 // SetupBookRoutes sets up book-related routes.
-func SetupBookRoutes(r *chi.Mux, db *mongo.Database) {
+func SetupBookRoutes(r chi.Router, db *mongo.Database) {
 	repo := repositories.NewBookRepository(db)
 	service := services.NewBookService(repo)
 	handler := handlers.NewBookHandler(service)
 
-	r.Route("/api/books", func(r chi.Router) {
-		r.Use(middlewares.AuthMiddleware) // Apply auth middleware
+	r.Use(middlewares.AuthMiddleware) // Apply auth middleware
 
-		r.Post("/", handler.CreateBook)
-		r.Get("/", handler.GetAllBooks)
-		r.Get("/{id}", handler.GetBookByID)
-		r.Put("/{id}", handler.UpdateBook)
-		r.Delete("/{id}", handler.DeleteBook)
-	})
+	r.Post("/", handler.CreateBook)
+	r.Get("/", handler.GetAllBooks)
+	r.Get("/{id}", handler.GetBookByID)
+	r.Put("/{id}", handler.UpdateBook)
+	r.Delete("/{id}", handler.DeleteBook)
 }
