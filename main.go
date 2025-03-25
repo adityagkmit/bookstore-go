@@ -1,16 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
-
-	"github.com/adityagkmit/bookstore/routes"
+	"os/signal"
+	"syscall"
 
 	config "github.com/adityagkmit/bookstore/utils"
-
-	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
 )
 
@@ -19,30 +17,22 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found")
 	}
-	// Initialize router
-	router := chi.NewRouter()
-
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Welcome to the Bookstore API!"))
-	})
 
 	// Connect to Database
 	db, err := config.ConnectDB()
 	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// Setup all routes
-	routes.SetupRoutes(router, db)
+	// Initialize the app
+	app := NewApp(db)
 
-	fmt.Println("Database connection established: ", db.Name())
-	// Start server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	// Handle graceful shutdown
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
+	err = app.Start(ctx)
+	if err != nil {
+		fmt.Println("Failed to start app:", err)
 	}
-
-	fmt.Println("Server running on port", port)
-	log.Fatal(http.ListenAndServe(":"+port, router))
-
 }
