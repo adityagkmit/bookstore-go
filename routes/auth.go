@@ -9,11 +9,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func SetupAuthRoutes(r *chi.Mux, db *mongo.Database) {
+// SetupAuthRoutes registers authentication-related routes
+func SetupAuthRoutes(r chi.Router, db *mongo.Database) {
 	authRepo := repositories.NewAuthRepository(db)
 	authService := services.NewAuthService(authRepo)
 	authHandler := handlers.NewAuthHandler(authService)
 
-	r.Post("/api/register", authHandler.Register)
-	r.Post("/api/login", authHandler.Login)
+	r.Post("/register", authHandler.Register)
+	r.Post("/login", authHandler.Login)
 }
