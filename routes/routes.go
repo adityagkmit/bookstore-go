@@ -8,4 +8,5 @@ import (
 // SetupRoutes initializes all application routes
 func SetupRoutes(r *chi.Mux, db *mongo.Database) {
 	SetupAuthRoutes(r, db) // Authentication Routes
+	SetupBookRoutes(r, db) // Book Routes
 }
