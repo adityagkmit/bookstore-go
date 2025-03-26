@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/adityagkmit/bookstore/utils"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -12,7 +13,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			http.Error(w, "Missing token", http.StatusUnauthorized)
+			utils.SendErrorResponse(w, http.StatusUnauthorized, "Missing token")
 			return
 		}
 
@@ -24,7 +25,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		})
 
 		if err != nil || !token.Valid {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			utils.SendErrorResponse(w, http.StatusUnauthorized, "Invalid token")
 			return
 		}
 
