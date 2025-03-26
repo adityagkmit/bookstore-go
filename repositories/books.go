@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/adityagkmit/bookstore/models"
 
@@ -69,15 +70,29 @@ func (r *BookRepository) GetBookByID(id string) (*models.Book, error) {
 func (r *BookRepository) UpdateBook(id string, book *models.Book) error {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid book ID format")
 	}
 
-	_, err = r.collection.UpdateOne(
+	// Perform the update
+	result, err := r.collection.UpdateOne(
 		context.TODO(),
 		bson.M{"_id": objectID},
 		bson.M{"$set": book},
 	)
-	return err
+
+	// Check if any document was updated
+	if result.MatchedCount == 0 {
+		return fmt.Errorf("book with ID %s not found", id)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to update book: %w", err)
+	}
+
+	// Set the correct ID in the book response
+	book.ID = objectID
+
+	return nil
 }
 
 // DeleteBook removes a book from the database.
