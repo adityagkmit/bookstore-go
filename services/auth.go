@@ -2,14 +2,10 @@ package services
 
 import (
 	"errors"
-	"os"
-	"time"
 
 	"github.com/adityagkmit/bookstore/models"
 	"github.com/adityagkmit/bookstore/repositories"
-
-	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/adityagkmit/bookstore/utils"
 )
 
 type AuthService struct {
@@ -18,33 +14,6 @@ type AuthService struct {
 
 func NewAuthService(repo *repositories.AuthRepository) *AuthService {
 	return &AuthService{repo: repo}
-}
-
-// HashPassword hashes a given password
-func HashPassword(password string) (string, error) {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	return string(hashed), err
-}
-
-// VerifyPassword checks if the provided password is correct
-func VerifyPassword(hashedPassword, password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-	return err == nil
-}
-
-// GenerateJWT generates a JWT token
-func GenerateJWT(email string) (string, error) {
-	secretKey := os.Getenv("JWT_SECRET")
-	if secretKey == "" {
-		return "", errors.New("JWT_SECRET is not set")
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": email,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
-	})
-
-	return token.SignedString([]byte(secretKey))
 }
 
 func (as *AuthService) Register(user *models.User) (string, error) {
@@ -56,7 +25,7 @@ func (as *AuthService) Register(user *models.User) (string, error) {
 	}
 
 	// Hash the password
-	hashedPassword, err := HashPassword(user.Password)
+	hashedPassword, err := utils.HashPassword(user.Password)
 	if err != nil {
 		return "", err
 	}
@@ -69,7 +38,7 @@ func (as *AuthService) Register(user *models.User) (string, error) {
 	}
 
 	// Generate and return JWT token
-	return GenerateJWT(user.Email)
+	return utils.GenerateJWT(user.Email)
 }
 
 func (as *AuthService) Login(email, password string) (string, error) {
@@ -78,9 +47,9 @@ func (as *AuthService) Login(email, password string) (string, error) {
 		return "", err
 	}
 
-	if !VerifyPassword(user.Password, password) {
+	if !utils.VerifyPassword(user.Password, password) {
 		return "", errors.New("invalid credentials")
 	}
 
-	return GenerateJWT(user.Email)
+	return utils.GenerateJWT(user.Email)
 }
