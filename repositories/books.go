@@ -3,9 +3,9 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/adityagkmit/bookstore/models"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -23,9 +23,12 @@ func NewBookRepository(db *mongo.Database) *BookRepository {
 	}
 }
 
-// CreateBook inserts a new book into the database.
+// CreateBook inserts a new book into the database with timestamps.
 func (r *BookRepository) CreateBook(book *models.Book) error {
 	book.ID = primitive.NewObjectID()
+	book.CreatedAt = time.Now()
+	book.UpdatedAt = time.Now()
+
 	_, err := r.collection.InsertOne(context.TODO(), book)
 	return err
 }
@@ -33,7 +36,7 @@ func (r *BookRepository) CreateBook(book *models.Book) error {
 // GetAllBooks retrieves all books from the database.
 func (r *BookRepository) GetAllBooks() ([]models.Book, error) {
 	var books []models.Book
-	cursor, err := r.collection.Find(context.TODO(), bson.M{})
+	cursor, err := r.collection.Find(context.TODO(), bson.M{"deletedAt": nil}) // Exclude soft-deleted books
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +61,7 @@ func (r *BookRepository) GetBookByID(id string) (*models.Book, error) {
 	}
 
 	var book models.Book
-	err = r.collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&book)
+	err = r.collection.FindOne(context.TODO(), bson.M{"_id": objectID, "deletedAt": nil}).Decode(&book)
 	if err != nil {
 		return nil, err
 	}
@@ -66,17 +69,19 @@ func (r *BookRepository) GetBookByID(id string) (*models.Book, error) {
 	return &book, nil
 }
 
-// UpdateBook updates an existing book.
+// UpdateBook updates an existing book and sets the updatedAt timestamp.
 func (r *BookRepository) UpdateBook(id string, book *models.Book) error {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return fmt.Errorf("invalid book ID format")
 	}
 
+	book.UpdatedAt = time.Now() // Update timestamp
+
 	// Perform the update
 	result, err := r.collection.UpdateOne(
 		context.TODO(),
-		bson.M{"_id": objectID},
+		bson.M{"_id": objectID, "deletedAt": nil}, // Ensure not updating deleted books
 		bson.M{"$set": book},
 	)
 
@@ -95,13 +100,18 @@ func (r *BookRepository) UpdateBook(id string, book *models.Book) error {
 	return nil
 }
 
-// DeleteBook removes a book from the database.
+// DeleteBook marks a book as deleted instead of removing it.
 func (r *BookRepository) DeleteBook(id string) error {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
 	}
 
-	_, err = r.collection.DeleteOne(context.TODO(), bson.M{"_id": objectID})
+	// Set DeletedAt to current time instead of deleting the document
+	update := bson.M{
+		"$set": bson.M{"deletedAt": primitive.NewDateTimeFromTime(time.Now())},
+	}
+
+	_, err = r.collection.UpdateOne(context.TODO(), bson.M{"_id": objectID}, update)
 	return err
 }
