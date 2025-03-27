@@ -3,11 +3,9 @@ package repositories
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/adityagkmit/bookstore/models"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -23,10 +21,7 @@ func NewAuthRepository(db *mongo.Database) *AuthRepository {
 
 // CreateUser inserts a new user into the database.
 func (ar *AuthRepository) CreateUser(user *models.User) error {
-	user.ID = primitive.NewObjectID()
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
-
+	user.SetTimestamps()
 	_, err := ar.db.InsertOne(context.TODO(), user)
 	return err
 }
