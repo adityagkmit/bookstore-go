@@ -28,6 +28,11 @@ func (bh *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := book.Validate(); err != nil {
+		utils.SendErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	if err := bh.service.CreateBook(&book); err != nil {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, "Failed to create book")
 		return
@@ -66,6 +71,11 @@ func (bh *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	var book models.Book
 	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
 		utils.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if err := book.Validate(); err != nil {
+		utils.SendErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

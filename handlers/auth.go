@@ -24,6 +24,11 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := user.Validate(); err != nil {
+		utils.SendErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	token, err := ah.service.Register(&user)
 	if err != nil {
 		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
