@@ -25,12 +25,19 @@ func NewBookRepository(db *mongo.Database) *BookRepository {
 
 // CreateBook inserts a new book into the database with timestamps.
 func (r *BookRepository) CreateBook(book *models.Book) error {
-	book.ID = primitive.NewObjectID()
-	book.CreatedAt = time.Now()
-	book.UpdatedAt = time.Now()
+	book.SetTimestamps()
 
-	_, err := r.collection.InsertOne(context.TODO(), book)
-	return err
+	result, err := r.collection.InsertOne(context.TODO(), book)
+	if err != nil {
+		return err
+	}
+
+	// Retrieve the inserted ID
+	if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
+		book.ID = oid
+	}
+
+	return nil
 }
 
 // GetAllBooks retrieves all books from the database.
@@ -76,13 +83,21 @@ func (r *BookRepository) UpdateBook(id string, book *models.Book) error {
 		return fmt.Errorf("invalid book ID format")
 	}
 
-	book.UpdatedAt = time.Now() // Update timestamp
+	book.SetTimestamps()
 
-	// Perform the update
+	// Perform the update, excluding CreatedAt from modification
+	updateFields := bson.M{
+		"title":       book.Title,
+		"author":      book.Author,
+		"description": book.Description,
+		"price":       book.Price,
+		"updatedAt":   book.UpdatedAt,
+	}
+
 	result, err := r.collection.UpdateOne(
 		context.TODO(),
 		bson.M{"_id": objectID, "deletedAt": nil}, // Ensure not updating deleted books
-		bson.M{"$set": book},
+		bson.M{"$set": updateFields},
 	)
 
 	// Check if any document was updated
@@ -94,7 +109,6 @@ func (r *BookRepository) UpdateBook(id string, book *models.Book) error {
 		return fmt.Errorf("failed to update book: %w", err)
 	}
 
-	// Set the correct ID in the book response
 	book.ID = objectID
 
 	return nil

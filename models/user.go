@@ -22,3 +22,12 @@ func (u *User) Validate() error {
 	validate := validator.New()
 	return validate.Struct(u)
 }
+
+// SetTimestamps initializes timestamps before saving
+func (u *User) SetTimestamps() {
+	currentTime := time.Now()
+	if u.CreatedAt.IsZero() {
+		u.CreatedAt = currentTime
+	}
+	u.UpdatedAt = currentTime
+}

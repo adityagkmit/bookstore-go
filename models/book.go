@@ -23,3 +23,12 @@ func (b *Book) Validate() error {
 	validate := validator.New()
 	return validate.Struct(b)
 }
+
+// SetTimestamps initializes timestamps before saving
+func (b *Book) SetTimestamps() {
+	currentTime := time.Now()
+	if b.CreatedAt.IsZero() {
+		b.CreatedAt = currentTime
+	}
+	b.UpdatedAt = currentTime
+}
