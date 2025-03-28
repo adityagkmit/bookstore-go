@@ -24,7 +24,7 @@ func NewBookHandler(service *services.BookService) *BookHandler {
 func (bh *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 	var book models.Book
 	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
-		utils.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
+		utils.SendErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -34,7 +34,7 @@ func (bh *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := bh.service.CreateBook(&book); err != nil {
-		utils.SendErrorResponse(w, http.StatusInternalServerError, "Failed to create book")
+		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -45,7 +45,7 @@ func (bh *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 func (bh *BookHandler) GetAllBooks(w http.ResponseWriter, r *http.Request) {
 	books, err := bh.service.GetAllBooks()
 	if err != nil {
-		utils.SendErrorResponse(w, http.StatusInternalServerError, "Failed to get books")
+		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -57,7 +57,7 @@ func (bh *BookHandler) GetBookByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	book, err := bh.service.GetBookByID(id)
 	if err != nil {
-		utils.SendErrorResponse(w, http.StatusNotFound, "Book not found")
+		utils.SendErrorResponse(w, http.StatusNotFound, err.Error())
 		return
 	}
 
@@ -70,7 +70,7 @@ func (bh *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 
 	var book models.Book
 	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
-		utils.SendErrorResponse(w, http.StatusBadRequest, "Invalid request body")
+		utils.SendErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -80,7 +80,7 @@ func (bh *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := bh.service.UpdateBook(id, &book); err != nil {
-		utils.SendErrorResponse(w, http.StatusInternalServerError, "Failed to update book")
+		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	utils.SendSuccessResponse(w, book, "Book updated successfully")
@@ -91,7 +91,7 @@ func (bh *BookHandler) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	if err := bh.service.DeleteBook(id); err != nil {
-		utils.SendErrorResponse(w, http.StatusInternalServerError, "Failed to delete book")
+		utils.SendErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
