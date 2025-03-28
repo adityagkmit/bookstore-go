@@ -20,7 +20,7 @@ func NewAuthHandler(service *services.AuthService) *AuthHandler {
 func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		utils.SendErrorResponse(w, http.StatusBadRequest, "Invalid input")
+		utils.SendErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -41,7 +41,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var credentials models.User
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-		utils.SendErrorResponse(w, http.StatusBadRequest, "Invalid input")
+		utils.SendErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

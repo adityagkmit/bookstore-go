@@ -106,7 +106,7 @@ func (r *BookRepository) UpdateBook(id string, book *models.Book) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("failed to update book: %w", err)
+		return err
 	}
 
 	book.ID = objectID
