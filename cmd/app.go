@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/adityagkmit/bookstore/config"
 	"github.com/adityagkmit/bookstore/routes"
+	"github.com/adityagkmit/bookstore/utils"
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -18,17 +20,27 @@ type App struct {
 }
 
 // NewApp initializes a new application instance
-func NewApp(db *mongo.Database) *App {
+func NewApp() (*App, error) {
+	// Load environment variables
+	config.LoadEnv()
+
+	// Connect to the database
+	db, err := utils.ConnectDB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	// Initialize router and setup routes
 	router := chi.NewRouter()
 	routes.SetupRoutes(router, db)
 
 	return &App{
 		router: router,
 		db:     db,
-	}
+	}, nil
 }
 
-// Start runs the HTTP server
+// Start runs the HTTP server with graceful shutdown
 func (a *App) Start(ctx context.Context) error {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -46,19 +58,15 @@ func (a *App) Start(ctx context.Context) error {
 	// Start the server in a goroutine
 	errChan := make(chan error, 1)
 	go func() {
-		err := server.ListenAndServe()
-		if err != nil {
-			errChan <- fmt.Errorf("failed to start server: %w", err)
-		}
-		close(errChan)
+		errChan <- server.ListenAndServe()
 	}()
 
 	// Graceful shutdown handling
 	select {
 	case err := <-errChan:
-		return err
+		return fmt.Errorf("server error: %w", err)
 	case <-ctx.Done():
 		log.Println("Shutting down server...")
-		return server.Shutdown(ctx)
+		return server.Shutdown(context.Background())
 	}
 }
