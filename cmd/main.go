@@ -2,37 +2,25 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/adityagkmit/bookstore/utils"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
-	}
-
-	// Connect to Database
-	db, err := utils.ConnectDB()
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
-	}
-
 	// Initialize the app
-	app := NewApp(db)
+	app, err := NewApp()
+	if err != nil {
+		log.Fatalf("Error initializing application: %v", err)
+	}
 
 	// Handle graceful shutdown
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	err = app.Start(ctx)
-	if err != nil {
-		fmt.Println("Failed to start app:", err)
+	// Start the application
+	if err := app.Start(ctx); err != nil {
+		log.Fatalf("Application error: %v", err)
 	}
 }
